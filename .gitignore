@@ -1,5 +1,6 @@
 node_modules
 out
+/dist
 
 # Editor directories and files
 .vscode/*
@@ -13,3 +14,4 @@ out
 *.sw?
 
 target
+

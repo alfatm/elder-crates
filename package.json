@@ -36,7 +36,7 @@
     "cargo",
     "crates"
   ],
-  "main": "./out/extension.cjs",
+  "main": "./dist/extension.cjs",
   "activationEvents": [
     "workspaceContains:**/Cargo.toml"
   ],
@@ -110,28 +110,27 @@
   ],
   "type": "module",
   "scripts": {
-    "vscode:prepublish": "pnpm run esbuild-base --minify",
-    "esbuild-base": "tsc && biome ci src && esbuild src/extension/index.ts --outfile=out/extension.cjs --bundle --external:vscode --platform=node --target=node16",
-    "build": "pnpm run esbuild-base --sourcemap",
-    "watch": "pnpm run esbuild-base --sourcemap --watch",
-    "package": "pnpm vsce package --no-dependencies",
-    "build:cli": "tsc && esbuild src/cli/index.ts --outfile=out/cli.cjs --bundle --platform=node --target=node16",
-    "cli": "node out/cli.cjs",
-    "validate": "pnpm run build:cli && node out/cli.cjs"
+    "vscode:prepublish": "tsc && biome ci src && vite build --minify",
+    "build": "tsc && vite build",
+    "watch": "vite build --watch",
+    "package": "pnpm vsce package --no-dependencies --out dist",
+    "publish": "pnpm vsce publish --no-dependencies",
+    "build:cli": "tsc && vite build",
+    "cli": "node dist/cli.cjs",
+    "validate": "pnpm run build:cli && node dist/cli.cjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
-    "@types/eslint": "^8.21.3",
-    "@types/node": "^18.15.3",
-    "@types/semver": "^7.3.13",
+    "@types/node": "^18.19.130",
+    "@types/semver": "^7.7.1",
     "@types/vscode": "1.72.0",
-    "esbuild": "^0.17.12",
-    "typescript": "^5.0.2"
+    "commander": "^14.0.2",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
   },
   "dependencies": {
-    "commander": "^14.0.2",
-    "node-fetch": "^3.3.1",
-    "semver": "^7.3.8",
-    "toml-eslint-parser": "^0.5.0"
+    "semver": "^7.7.3",
+    "toml-eslint-parser": "^0.5.0",
+    "undici": "^7.16.0"
   }
 }

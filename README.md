@@ -27,7 +27,7 @@ A standalone CLI tool is included for CI/CD pipelines and terminal usage.
 pnpm run build:cli
 
 # Run directly
-node out/cli.cjs ./Cargo.toml
+node dist/cli.cjs ./Cargo.toml
 ```
 
 ### Usage
@@ -63,11 +63,11 @@ sparse-crates-cli ./Cargo.toml --registry my-registry=https://my-registry.exampl
 
 ### Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0    | All dependencies are up to date |
-| 1    | Patch or minor updates available |
-| 2    | Major updates available |
+| Code | Meaning                                 |
+| ---- | --------------------------------------- |
+| 0    | All dependencies are up to date         |
+| 1    | Patch or minor updates available        |
+| 2    | Major updates available                 |
 | 3    | Errors occurred (e.g., crate not found) |
 
 ## VSCode Extension Configuration

@@ -3,6 +3,7 @@
 node_modules/
 src/
 out/*.map
+dist/*.map
 .gitignore
 rome.json
 tsconfig.json

@@ -1,11 +1,9 @@
 import { readFile } from 'node:fs/promises'
-import http from 'node:http'
-import https from 'node:https'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import fetch from 'node-fetch'
 import semver from 'semver'
+import { Agent, fetch } from 'undici'
 
 import type { FetchOptions, Logger, Registry } from './types.js'
 
@@ -25,8 +23,7 @@ const noop = () => {
 
 const noopLogger: Logger = { debug: noop, info: noop, warn: noop, error: noop }
 
-const httpAgent = new http.Agent({ maxSockets: MAX_SOCKETS })
-const httpsAgent = new https.Agent({ maxSockets: MAX_SOCKETS })
+const agent = new Agent({ connections: MAX_SOCKETS })
 
 interface VersionsCache {
   versions: semver.SemVer[]
@@ -112,7 +109,7 @@ const fetchRemote = async (
 
   try {
     const response = await fetch(url, {
-      agent: (u) => (u.protocol === 'https:' ? httpsAgent : httpAgent),
+      dispatcher: agent,
       headers,
       signal: controller.signal,
     })
