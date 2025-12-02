@@ -203,7 +203,7 @@ export const validateCargoToml = async (
   const content = await readFile(filePath, 'utf-8')
 
   // Try to find and load Cargo.lock
-  const lockPath = findCargoLockPath(filePath)
+  const lockPath = await findCargoLockPath(filePath)
   const lockfile = lockPath ? readCargoLockfile(lockPath) : undefined
 
   return validateCargoTomlContent(content, filePath, config, lockfile)

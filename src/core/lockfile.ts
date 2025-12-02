@@ -1,7 +1,11 @@
+import { execFile } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
+import { promisify } from 'node:util'
 
 import semver from 'semver'
+
+
 import { parseTOML } from 'toml-eslint-parser'
 import type { TOMLBare, TOMLContentNode, TOMLKeyValue, TOMLQuoted, TOMLStringValue } from 'toml-eslint-parser/lib/ast'
 
@@ -25,29 +29,28 @@ export interface CargoLockfile {
   packages: Map<string, LockedPackage[]>
 }
 
+const execFileAsync = promisify(execFile)
+
 /**
  * Find the Cargo.lock file for a given Cargo.toml file.
- * Searches in the same directory and parent directories up to the workspace root.
+ * Uses `cargo locate-project` to find the root Cargo.toml, then looks for Cargo.lock next to it.
  */
-export function findCargoLockPath(cargoTomlPath: string): string | undefined {
-  let dir = path.dirname(cargoTomlPath)
-  const root = path.parse(dir).root
-
-  while (dir !== root) {
-    const lockPath = path.join(dir, 'Cargo.lock')
+export async function findCargoLockPath(cargoTomlPath: string): Promise<string | undefined> {
+  try {
+    const { stdout } = await execFileAsync('cargo', ['locate-project', '--message-format', 'plain'], {
+      cwd: path.dirname(cargoTomlPath),
+    })
+    const rootCargoToml = stdout.trim()
+    if (!rootCargoToml) {
+      return undefined
+    }
+    const lockPath = path.join(path.dirname(rootCargoToml), 'Cargo.lock')
     if (existsSync(lockPath)) {
       return lockPath
     }
-    // Also check if we've hit a workspace root (has Cargo.toml with [workspace])
-    const parentCargoToml = path.join(dir, 'Cargo.toml')
-    if (existsSync(parentCargoToml) && dir !== path.dirname(cargoTomlPath)) {
-      // If parent has Cargo.toml but no Cargo.lock, stop searching
-      // (the workspace might not have a lock file yet)
-      break
-    }
-    dir = path.dirname(dir)
+  } catch {
+    // cargo locate-project failed (non-zero exit code, cargo not found, etc.)
   }
-
   return undefined
 }
 
