@@ -5,7 +5,6 @@ import { promisify } from 'node:util'
 
 import semver from 'semver'
 
-
 import { parseTOML } from 'toml-eslint-parser'
 import type { TOMLBare, TOMLContentNode, TOMLKeyValue, TOMLQuoted, TOMLStringValue } from 'toml-eslint-parser/lib/ast'
 
