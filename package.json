@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "elder-crates",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {
     "name": "alfatm"
   },
@@ -34,7 +34,14 @@
   "keywords": [
     "rust",
     "cargo",
-    "crates"
+    "crates",
+    "dependencies",
+    "toml",
+    "crates.io",
+    "registry",
+    "semver",
+    "outdated",
+    "versions"
   ],
   "main": "./dist/extension.cjs",
   "activationEvents": [
