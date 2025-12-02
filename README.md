@@ -1,26 +1,76 @@
 # Sparse Crates
 
-**Sparse Crates**, an extension helping Rust developers spot outdated dependencies in `Cargo.toml` manifest files.
+A VSCode extension and CLI tool helping Rust developers spot outdated dependencies in `Cargo.toml` manifest files.
 
-This is a fork of the extension [**crates**](https://github.com/serayuzgur/crates) by [Seray Uzgur](https://github.com/serayuzgur) with significant changes and rewrites.
+This is a fork of [**sparse-crates**](https://github.com/citreae535/sparse-crates) by [citreae535](https://github.com/citreae535), which itself was a fork of [**crates**](https://github.com/serayuzgur/crates) by [Seray Uzgur](https://github.com/serayuzgur).
 
-![Sparse Crates in Action](https://github.com/citreae535/sparse-crates/raw/main/sparse_crates_in_action.png)
+![Sparse Crates in Action](https://github.com/alfatm/sparse-crates/raw/main/sparse_crates_in_action.png)
 
-## New Features
+## Features
 
-- Cargo's new [sparse protocol](https://rust-lang.github.io/rfcs/2789-sparse-index.html)
+- Cargo's [sparse protocol](https://rust-lang.github.io/rfcs/2789-sparse-index.html) for fast index lookups
+- Granular version status: ✅ latest, 🟡 patch behind, 🟠 minor behind, ❌ major behind
 - Remote and local crates.io mirrors (HTTP/HTTPS/file URLs)
-- Alternate registries (HTTP/HTTPS/file URLs)
-- Package rename
+- Alternate registries with authentication token support
+- Automatic registry detection from `.cargo/config.toml`
+- Package rename support
 - Detailed logs in VSCode output channel
 
-## Planned Features and TODO
+## CLI
 
-- Status bar items and notifications
-- Parse and show dependency versions from Cargo.lock
-- Units tests
+A standalone CLI tool is included for CI/CD pipelines and terminal usage.
 
-## Configurations
+### Installation
+
+```bash
+# Build the CLI
+pnpm run build:cli
+
+# Run directly
+node out/cli.cjs ./Cargo.toml
+```
+
+### Usage
+
+```bash
+sparse-crates-cli <path-to-Cargo.toml> [options]
+
+Options:
+  --filter <name>        Filter by dependency name (partial match)
+  --line <num>           Filter by line number
+  --show-plugin          Show output as VSCode plugin would display it
+  --no-cache             Disable Cargo cache lookup
+  --json                 Output results as JSON
+  -v, --verbose          Verbosity level: -v warn/error, -vv info, -vvv debug
+  --registry <name=url>  Add alternate registry (overrides cargo config)
+```
+
+### Examples
+
+```bash
+# Check all dependencies
+sparse-crates-cli ./Cargo.toml
+
+# Filter by name
+sparse-crates-cli ./Cargo.toml --filter serde
+
+# JSON output for scripting
+sparse-crates-cli ./Cargo.toml --json
+
+# Use custom registry
+sparse-crates-cli ./Cargo.toml --registry my-registry=https://my-registry.example.com/api/v1/crates/
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0    | All dependencies are up to date |
+| 1    | Patch or minor updates available |
+| 2    | Major updates available |
+| 3    | Errors occurred (e.g., crate not found) |
+
+## VSCode Extension Configuration
 
 - `sparse-crates.useCargoCache`: If true, Cargo's index cache is searched first before the registries. Cache must be stored in the sparse format.
 
@@ -28,16 +78,22 @@ This is a fork of the extension [**crates**](https://github.com/serayuzgur/crate
 
 - `sparse-crates.cratesIoCache`: The index cache directory of the default crates.io registry. Change this value only if you use a remote or local mirror of crates.io. You can find the directories at CARGO_HOME/registry/index.
 
-- `sparse-crates.registries`: An array of alternate registries. Each item is an object with two required and two optional properties.
+- `sparse-crates.registries`: An array of alternate registries:
 ```json
 {
-    "name": "(Required) The name of the registry. The name of the registry. It must be the same as your dependencies' \"registry\" key.",
-    "index": "(Required) The index URL of the registry. The index must use the sparse protocol. Use a file URL if the registry is on disk.",
-    "cache": "(Optional) Cargo's index cache directory of the registry. You can find the directories at CARGO_HOME/registry/index. Cache is not searched for the registry if this property is not given.",
-    "docs": "(Optional) The docs URL of the registry, if one exists. The link to the docs of a specific version of a crate is obtained by `${docs}${name}/${version}`. This is only used when rendering hover messages on the decorators."
+    "name": "(Required) Registry name matching dependencies' \"registry\" key",
+    "index": "(Required) Index URL (sparse protocol, supports file:// for local)",
+    "cache": "(Optional) Cargo's index cache directory at CARGO_HOME/registry/index",
+    "docs": "(Optional) Docs URL, used for hover links as ${docs}${name}/${version}"
 }
 ```
 
+## Planned Features
+
+- Status bar items and notifications
+- Parse and show dependency versions from Cargo.lock
+
 ## Thanks
 
+- [citreae535](https://github.com/citreae535), the original author of [**sparse-crates**](https://github.com/citreae535/sparse-crates)
 - [Seray Uzgur](https://github.com/serayuzgur), the original author of [**crates**](https://github.com/serayuzgur/crates)

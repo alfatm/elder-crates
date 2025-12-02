@@ -3,13 +3,23 @@
   "name": "sparse-crates",
   "version": "0.1.0",
   "author": {
-    "name": "citreae535"
+    "name": "alfatm"
   },
-  "publisher": "citreae535",
-  "homepage": "https://github.com/citreae535/sparse-crates",
+  "contributors": [
+    {
+      "name": "citreae535",
+      "url": "https://github.com/citreae535"
+    },
+    {
+      "name": "serayuzgur",
+      "url": "https://github.com/serayuzgur"
+    }
+  ],
+  "publisher": "alfatm",
+  "homepage": "https://github.com/alfatm/sparse-crates",
   "repository": {
     "type": "github",
-    "url": "https://github.com/citreae535/sparse-crates.git"
+    "url": "https://github.com/alfatm/sparse-crates.git"
   },
   "engines": {
     "vscode": "^1.72.0",
