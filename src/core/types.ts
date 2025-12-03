@@ -24,6 +24,8 @@ export interface Dependency {
   line: number
   /** The source of the dependency (registry, path, or git) */
   source: DependencySource
+  /** Whether the dependency is disabled via `# crates: disable-check` comment */
+  disabled?: boolean
 }
 
 /**

@@ -132,10 +132,40 @@ When you specify a short version or use operators, Cargo interprets it as a rang
 }
 ```
 
+## Disabling Checks
+
+You can skip version checking for specific dependencies or entire files using comments.
+
+### Disable a Single Dependency
+
+Add `# crates: disable-check` comment on the dependency line:
+
+```toml
+[dependencies]
+serde = "1.0"
+legacy-crate = "0.1.0"  # crates: disable-check
+tokio = "1"
+```
+
+### Disable All Checks in a File
+
+Add `#! crates: disable-check` at the beginning of the file:
+
+```toml
+#! crates: disable-check
+[package]
+name = "my-crate"
+version = "0.1.0"
+
+[dependencies]
+# All dependencies in this file will be skipped
+```
+
+Comments are case-insensitive and allow flexible spacing (e.g., `#crates:disable-check` also works).
+
 ## Planned Features
 
 - Status bar items and notifications
-- Parse and show dependency versions from Cargo.lock
 
 ## Thanks
 

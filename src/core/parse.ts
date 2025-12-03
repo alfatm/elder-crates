@@ -10,10 +10,40 @@ import type {
 
 import type { Dependency, DependencySource } from './types.js'
 
+/** The disable-check comment pattern for individual dependencies */
+const DISABLE_CHECK_INLINE = /# *crates: *disable-check/i
+
+/** The disable-check comment pattern for the entire file (in the header) */
+const DISABLE_CHECK_FILE = /^#! *crates: *disable-check/im
+
+/**
+ * Check if the file has a file-level disable-check comment in the header.
+ * The comment `#! crates: disable-check` at the beginning of the file disables all checks.
+ */
+export function hasFileDisableCheck(content: string): boolean {
+  return DISABLE_CHECK_FILE.test(content)
+}
+
+/**
+ * Check if a specific line has an inline disable-check comment.
+ * The comment `# crates: disable-check` on a dependency line disables the check for that dependency.
+ */
+export function hasLineDisableCheck(content: string, line: number): boolean {
+  const lines = content.split('\n')
+  const lineContent = lines[line]
+  if (lineContent === undefined) {
+    return false
+  }
+  return DISABLE_CHECK_INLINE.test(lineContent)
+}
+
 /**
  * Parses `Cargo.toml` tables and returns all dependencies that have valid semver requirements.
+ * @param body - The parsed TOML tables
+ * @param content - The original file content (used to detect disable-check comments)
  */
-export function parseCargoDependencies(body: TOMLTable[]): Dependency[] {
+export function parseCargoDependencies(body: TOMLTable[], content?: string): Dependency[] {
+  const fileDisabled = content ? hasFileDisableCheck(content) : false
   return body
     .flatMap((node) => {
       const keys = node.key.keys.map(getKeyString)
@@ -22,27 +52,27 @@ export function parseCargoDependencies(body: TOMLTable[]): Dependency[] {
         // [dependencies]
         // tokio = "1"
         // clap = { version = "4" }
-        return parseMultipleDependencies(node.body)
+        return parseMultipleDependencies(node.body, content, fileDisabled)
       } else if (keys.length === 2 && key0 !== undefined && key1 !== undefined) {
         if (isDependencyKey(key0)) {
           // [dependencies.tokio]
-          return parseSingleDependency(key1, node.body)
+          return parseSingleDependency(key1, node.body, content, fileDisabled)
         } else if (key0 === 'workspace' && isDependencyKey(key1)) {
           // [workspace.dependencies]
           // tokio = "1"
           // clap = { version = "4" }
-          return parseMultipleDependencies(node.body)
+          return parseMultipleDependencies(node.body, content, fileDisabled)
         }
         return []
       } else if (keys.length === 3 && key0 !== undefined && key1 !== undefined && key2 !== undefined) {
         if (key0 === 'workspace' && isDependencyKey(key1)) {
           // [workspace.dependencies.tokio]
-          return parseSingleDependency(key2, node.body)
+          return parseSingleDependency(key2, node.body, content, fileDisabled)
         } else if (key0 === 'target' && isDependencyKey(key2)) {
           // [target.whatever.dependencies]
           // tokio = "1"
           // clap = { version = "4" }
-          return parseMultipleDependencies(node.body)
+          return parseMultipleDependencies(node.body, content, fileDisabled)
         }
         return []
       } else if (
@@ -53,7 +83,7 @@ export function parseCargoDependencies(body: TOMLTable[]): Dependency[] {
         isDependencyKey(key2)
       ) {
         // [target.whatever.dependencies.tokio]
-        return parseSingleDependency(key3, node.body)
+        return parseSingleDependency(key3, node.body, content, fileDisabled)
       }
       return []
     })
@@ -74,7 +104,12 @@ export function parseCargoDependencies(body: TOMLTable[]): Dependency[] {
  * version = "1"
  * ```
  */
-function parseSingleDependency(crateName: string, body: TOMLKeyValue[]): Dependency | undefined {
+function parseSingleDependency(
+  crateName: string,
+  body: TOMLKeyValue[],
+  content?: string,
+  fileDisabled?: boolean,
+): Dependency | undefined {
   let line: number | undefined
   let version: semver.Range | undefined
   let versionRaw: string | undefined
@@ -130,6 +165,9 @@ function parseSingleDependency(crateName: string, body: TOMLKeyValue[]): Depende
       ? { type: 'git', git: gitValue, branch: gitBranch, tag: gitTag, rev: gitRev }
       : { type: 'registry', registry }
 
+  // Check if this dependency is disabled via comment
+  const disabled = fileDisabled || (content && line !== undefined ? hasLineDisableCheck(content, line) : false)
+
   // For registry dependencies, version is required
   if (source.type === 'registry') {
     if (version !== undefined && versionRaw !== undefined && line !== undefined) {
@@ -140,6 +178,7 @@ function parseSingleDependency(crateName: string, body: TOMLKeyValue[]): Depende
         line,
         registry,
         source,
+        disabled: disabled || undefined,
       }
     }
     return undefined
@@ -154,6 +193,7 @@ function parseSingleDependency(crateName: string, body: TOMLKeyValue[]): Depende
       line,
       registry,
       source,
+      disabled: disabled || undefined,
     }
   }
 
@@ -168,7 +208,11 @@ function parseSingleDependency(crateName: string, body: TOMLKeyValue[]): Depende
  * "tokio" = "1"
  * ```
  */
-function parseMultipleDependencies(body: TOMLKeyValue[]): Dependency[] {
+function parseMultipleDependencies(
+  body: TOMLKeyValue[],
+  content?: string,
+  fileDisabled?: boolean,
+): Dependency[] {
   return body
     .map((node): Dependency | undefined => {
       const firstKey = node.key.keys[0]
@@ -181,20 +225,23 @@ function parseMultipleDependencies(body: TOMLKeyValue[]): Dependency[] {
         // crate_name = "version"
         const version = parseVersionRange(value.value)
         if (version !== undefined) {
+          const line = node.loc.end.line - 1
+          const disabled = fileDisabled || (content ? hasLineDisableCheck(content, line) : false)
           return {
             name: key,
             version,
             versionRaw: value.value,
             // TOML parser lines are 1-based, but VSCode lines are 0-based
-            line: node.loc.end.line - 1,
+            line,
             registry: undefined,
             source: { type: 'registry', registry: undefined },
+            disabled: disabled || undefined,
           }
         }
         return undefined
       } else if (value.type === 'TOMLInlineTable') {
         // crate_name = { version = "version" ... } or { path = "..." } or { git = "..." }
-        return parseSingleDependency(key, value.body)
+        return parseSingleDependency(key, value.body, content, fileDisabled)
       }
       return undefined
     })

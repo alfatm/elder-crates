@@ -294,9 +294,11 @@ export const validateCargoTomlContent = async (
     const cargoTomlDir = path.dirname(filePath)
     const toml = parseTOML(content)
     const tables = toml.body[0].body.filter((v): v is TOMLTable => v.type === 'TOMLTable')
-    const dependencies = parseCargoDependencies(tables)
+    const dependencies = parseCargoDependencies(tables, content)
+    // Filter out disabled dependencies (those with `# crates: disable-check` comment)
+    const activeDependencies = dependencies.filter((dep) => !dep.disabled)
     const results = await Promise.all(
-      dependencies.map((dep) => validateDependency(dep, cargoTomlDir, config, lockfile)),
+      activeDependencies.map((dep) => validateDependency(dep, cargoTomlDir, config, lockfile)),
     )
 
     return { filePath, dependencies: results }

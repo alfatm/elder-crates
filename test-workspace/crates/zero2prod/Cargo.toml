@@ -1,0 +1,38 @@
+[package]
+name = "zero2prod"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clippy = { version = "0.0.302", optional = true }
+pin-utils = "0.1.0"
+Inflector = "0.11.4"
+web-sys = "0.3.51"
+"lazy_static" = "1.4.0"
+tokio = { version = "1", features = ["full"] }
+external = { version = "0.1.0", registry = "public-registry" }
+external2 = { version = "1.1.0", registry = "private-registry" }
+inkwell = "0.1.0-llvm8sample"
+crossbeam-utils = "0.8.5"
+block-modes = "0.8.1"                                            # crates: disable-check
+jpegxl-sys = "0.8.2"
+tracing = "=0.1.37"
+serde = "1.0.228"
+reqwest = "0.12.24"
+rand = "0.9.2"
+regex = "1.12.2"
+chrono = "0.4.42"
+log = "0.4.29"
+actix-web = "4.12.1"
+thiserror = "2.0.17"
+serde_json = "1.0.145"
+
+[dependencies.nom]
+version = "7"
+features = ["verbose-errors"]
+
+[dev-dependencies]
+tempdir = "0.3.7"
+
+[build-dependencies]
+gcc = "0.3.55"

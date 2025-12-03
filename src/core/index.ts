@@ -23,7 +23,7 @@ export {
 } from './format.js'
 export type { CargoLockfile, LockedPackage } from './lockfile.js'
 export { findCargoLockPath, getLockedVersion, parseCargoLockfile, readCargoLockfile } from './lockfile.js'
-export { parseCargoDependencies } from './parse.js'
+export { hasFileDisableCheck, hasLineDisableCheck, parseCargoDependencies } from './parse.js'
 export type { SourceResolution } from './source.js'
 export { checkCliToolsAvailability, resetCliToolsCache, resolveSourceVersion } from './source.js'
 export type {
