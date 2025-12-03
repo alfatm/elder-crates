@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fancy Crates - Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #f5a623;
+            --primary-dark: #e09100;
+            --bg-dark: #1e1e1e;
+            --bg-light: #2d2d2d;
+            --text: #ffffff;
+            --text-muted: #b0b0b0;
+            --green: #4caf50;
+            --yellow: #ffeb3b;
+            --orange: #ff9800;
+            --red: #f44336;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--bg-light);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #2a2a2a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(245, 166, 35, 0.05) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+        }
+
+        .hero-logo {
+            width: 180px;
+            height: 180px;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #ffd54f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .tagline {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .badge {
+            background: var(--bg-light);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid var(--bg-light);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Sections */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 4rem;
+            font-size: 1.1rem;
+        }
+
+        /* Problem Section */
+        .problem {
+            background: var(--bg-light);
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .problem-card {
+            background: var(--bg-dark);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .problem-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .problem-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .problem-card p {
+            color: var(--text-muted);
+        }
+
+        /* Screenshot Section */
+        .screenshot {
+            text-align: center;
+        }
+
+        .screenshot-container {
+            position: relative;
+            display: inline-block;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .screenshot-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent);
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-light);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), #ffd54f);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+        }
+
+        /* Status Indicators */
+        .status-section {
+            background: var(--bg-light);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .status-item {
+            background: var(--bg-dark);
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-icon {
+            font-size: 2rem;
+            width: 50px;
+            text-align: center;
+        }
+
+        .status-info h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Platforms */
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 3rem;
+        }
+
+        .platform-card {
+            background: var(--bg-light);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .platform-header {
+            background: linear-gradient(135deg, var(--primary), #ffd54f);
+            padding: 1.5rem 2rem;
+            color: var(--bg-dark);
+        }
+
+        .platform-header h3 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .platform-content {
+            padding: 2rem;
+        }
+
+        .platform-content ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .platform-content li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .platform-content li::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            color: var(--primary);
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .tech-item {
+            background: var(--bg-light);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .tech-item img {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Use Cases */
+        .usecases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .usecase-card {
+            background: var(--bg-light);
+            padding: 2rem;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .usecase-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .usecase-card p {
+            color: var(--text-muted);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary) 0%, #ffd54f 100%);
+            text-align: center;
+            border-radius: 24px;
+            margin: 4rem 2rem;
+            padding: 4rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            color: var(--bg-dark);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: rgba(0, 0, 0, 0.7);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .cta-section .btn {
+            background: var(--bg-dark);
+            color: var(--text);
+        }
+
+        .cta-section .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-light);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .tagline {
+                font-size: 1.2rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .platforms-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="#" class="nav-logo">
+            <img src="fancy-crates-logo.png" alt="Fancy Crates">
+            Fancy Crates
+        </a>
+        <ul class="nav-links">
+            <li><a href="#indicators">Status</a></li>
+            <li><a href="#versioning">Versioning</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#platforms">Platforms</a></li>
+            <li><a href="https://github.com/alfatm/fancy-crates">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content fade-in">
+            <img src="fancy-crates-logo.png" alt="Fancy Crates Logo" class="hero-logo">
+            <h1>Fancy Crates</h1>
+            <p class="tagline">Spot outdated dependencies in Cargo.toml as you work</p>
+            <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto 2rem; font-size: 1.1rem;">
+                Keeping dependencies up to date is essential for security patches, bug fixes, and new features.
+                Catch outdated dependencies early—before they accumulate into a major upgrade effort.
+            </p>
+            <div class="hero-badges">
+                <span class="badge">v1.2.6</span>
+                <span class="badge">MIT License</span>
+                <span class="badge">VSCode + CLI</span>
+            </div>
+            <div class="cta-buttons">
+                <a href="https://marketplace.visualstudio.com/items?itemName=AlfaTM.fancy-crates"
+                    class="btn btn-primary">
+                    Install Extension
+                </a>
+                <a href="https://github.com/alfatm/fancy-crates" class="btn btn-secondary">
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="problem">
+        <h2 class="section-title">The Problem</h2>
+        <p class="section-subtitle">Managing dependencies in Rust projects can be challenging</p>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="problem-icon">🔍</div>
+                <h3>Hard to Track</h3>
+                <p>Manually checking crates.io for updates is time-consuming and error-prone</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">⚠️</div>
+                <h3>Security Risks</h3>
+                <p>Outdated dependencies may contain known vulnerabilities</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">🔧</div>
+                <h3>Breaking Changes</h3>
+                <p>Knowing patch vs major updates helps plan migration effort</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshot Section -->
+    <section class="screenshot">
+        <h2 class="section-title">See It In Action</h2>
+        <p class="section-subtitle">Instant visual feedback right in your editor</p>
+        <div class="screenshot-container">
+            <img src="fancy-crates-in-action.png" alt="Fancy Crates in VSCode showing dependency status">
+        </div>
+    </section>
+
+    <!-- Status Indicators -->
+    <section class="status-section" id="indicators">
+        <h2 class="section-title">Status Indicators</h2>
+        <p class="section-subtitle">Granular version status at a glance</p>
+        <div class="status-grid">
+            <div class="status-item">
+                <span class="status-icon">✅</span>
+                <div class="status-info">
+                    <h4>Latest</h4>
+                    <p>Latest stable satisfies your requirement</p>
+                </div>
+            </div>
+            <div class="status-item">
+                <span class="status-icon" style="color: #ffeb3b;">🟨</span>
+                <div class="status-info">
+                    <h4>Patch Behind</h4>
+                    <p>Patch update available</p>
+                </div>
+            </div>
+            <div class="status-item">
+                <span class="status-icon" style="color: #ff9800;">🟧</span>
+                <div class="status-info">
+                    <h4>Minor Behind</h4>
+                    <p>Minor update available</p>
+                </div>
+            </div>
+            <div class="status-item">
+                <span class="status-icon" style="color: #f44336;">🟥</span>
+                <div class="status-info">
+                    <h4>Major Behind</h4>
+                    <p>Major update available</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Version Requirements Section -->
+    <section id="versioning">
+        <h2 class="section-title">Smart Version Detection</h2>
+        <p class="section-subtitle">Understands Cargo's version requirement syntax</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+            <!-- Exact vs Range -->
+            <div class="feature-card">
+                <h3 style="margin-bottom: 1.5rem;">Exact vs Range Versions</h3>
+                <div style="margin-bottom: 1rem;">
+                    <strong style="color: var(--primary);">Exact versions</strong> <code
+                        style="background: var(--bg-dark); padding: 0.2rem 0.5rem; border-radius: 4px;">1.2.3</code>,
+                    <code style="background: var(--bg-dark); padding: 0.2rem 0.5rem; border-radius: 4px;">0.5.0</code>
+                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Compared directly against latest. If you
+                        specify <code>1.2.3</code> and latest is <code>1.2.4</code>, you'll see 🟨 patch-behind.</p>
+                </div>
+                <div>
+                    <strong style="color: var(--primary);">Range versions</strong> <code
+                        style="background: var(--bg-dark); padding: 0.2rem 0.5rem; border-radius: 4px;">1</code>, <code
+                        style="background: var(--bg-dark); padding: 0.2rem 0.5rem; border-radius: 4px;">1.2</code>,
+                    <code style="background: var(--bg-dark); padding: 0.2rem 0.5rem; border-radius: 4px;">^1.2.3</code>
+                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Evaluated as ranges. If you specify
+                        <code>1</code> and latest is <code>1.9.0</code>, you'll see ✅ latest because <code>1.9.0</code>
+                        satisfies the range.</p>
+                </div>
+            </div>
+
+            <!-- Examples -->
+            <div class="feature-card">
+                <h3 style="margin-bottom: 1.5rem;">Real Examples</h3>
+                <div style="font-family: monospace; font-size: 0.9rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--bg-dark);">
+                        <span>tokio = "1" <span style="color: var(--text-muted);">→ 1.40.0</span></span>
+                        <span>✅</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--bg-dark);">
+                        <span>serde = "1.0" <span style="color: var(--text-muted);">→ 1.0.210</span></span>
+                        <span>✅</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--bg-dark);">
+                        <span>serde = "1.0.200" <span style="color: var(--text-muted);">→ 1.0.210</span></span>
+                        <span>🟨</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--bg-dark);">
+                        <span>clap = "3" <span style="color: var(--text-muted);">→ 4.5.0</span></span>
+                        <span>🟥</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--bg-dark);">
+                        <span>rand = "0.7" <span style="color: var(--text-muted);">→ 0.8.5</span></span>
+                        <span>🟧</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                        <span>rand = "0.8.4" <span style="color: var(--text-muted);">→ 0.8.5</span></span>
+                        <span>🟨</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <h2 class="section-title">Key Features</h2>
+        <p class="section-subtitle">Everything you need to manage Rust dependencies effectively</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Sparse Protocol</h3>
+                <p>Uses Cargo's sparse protocol for blazingly fast index lookups without cloning the entire registry</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>Private Registries</h3>
+                <p>Full support for alternate registries with authentication tokens and custom mirrors</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h3>Auto Config Detection</h3>
+                <p>Automatically reads .cargo/config.toml for registry settings and source replacements</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h3>Package Rename Support</h3>
+                <p>Properly handles renamed packages in your Cargo.toml dependencies</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>Detailed Logs</h3>
+                <p>Comprehensive logging in VSCode output channel for debugging</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>Disable Check Comments</h3>
+                <p>Skip specific dependencies or entire files with <code># crates: disable-check</code></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Disabling Checks Section -->
+    <section class="status-section" id="disable">
+        <h2 class="section-title">Flexible Control</h2>
+        <p class="section-subtitle">Skip version checking when you need to</p>
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; max-width: 1000px; margin: 0 auto;">
+            <div class="feature-card">
+                <h3 style="margin-bottom: 1rem;">Disable Single Dependency</h3>
+                <div class="code-block" style="margin-top: 1rem;">
+                    <code style="color: var(--text-muted);">[dependencies]</code><br>
+                    <code>serde = "1.0"</code><br>
+                    <code>legacy-crate = "0.1.0"  <span style="color: #6a9955;"># crates: disable-check</span></code><br>
+                    <code>tokio = "1"</code>
+                </div>
+            </div>
+            <div class="feature-card">
+                <h3 style="margin-bottom: 1rem;">Disable Entire File</h3>
+                <div class="code-block" style="margin-top: 1rem;">
+                    <code><span style="color: #6a9955;">#! crates: disable-check</span></code><br>
+                    <code style="color: var(--text-muted);">[package]</code><br>
+                    <code>name = "my-crate"</code><br>
+                    <code style="color: var(--text-muted);"># All deps in this file skipped</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platforms Section -->
+    <section id="platforms">
+        <h2 class="section-title">Available Platforms</h2>
+        <p class="section-subtitle">Use where it fits your workflow best</p>
+        <div class="platforms-grid">
+            <div class="platform-card">
+                <div class="platform-header">
+                    <h3>🧩 VSCode Extension</h3>
+                </div>
+                <div class="platform-content">
+                    <ul>
+                        <li>Real-time inline decorations</li>
+                        <li>Hover information with docs links</li>
+                        <li>Auto-refresh on file changes</li>
+                        <li>Refresh Dependencies command</li>
+                        <li>Reload (Clear Cache) command</li>
+                    </ul>
+                    <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Install from Marketplace:</p>
+                    <div class="code-block">
+                        <code>ext install AlfaTM.fancy-crates</code>
+                    </div>
+                </div>
+            </div>
+            <div class="platform-card">
+                <div class="platform-header">
+                    <h3>💻 CLI Tool</h3>
+                </div>
+                <div class="platform-content">
+                    <ul>
+                        <li>CI/CD pipeline integration</li>
+                        <li>JSON output for scripting</li>
+                        <li>Exit codes: 0=up-to-date, 1=patch/minor, 2=major, 3=error</li>
+                        <li>Filter by name <code>--filter serde</code> or line <code>--line 42</code></li>
+                        <li>Verbosity levels: <code>-v</code> <code>-vv</code> <code>-vvv</code></li>
+                    </ul>
+                    <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Usage:</p>
+                    <div class="code-block">
+                        <code>fancy-crates-cli ./Cargo.toml --json</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section>
+        <h2 class="section-title">Built With Modern Tech</h2>
+        <p class="section-subtitle">Clean, maintainable, and performant codebase</p>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <span>📘</span> TypeScript 5.9
+            </div>
+            <div class="tech-item">
+                <span>⚡</span> Vite
+            </div>
+            <div class="tech-item">
+                <span>🔍</span> Biome
+            </div>
+            <div class="tech-item">
+                <span>🌐</span> Undici HTTP
+            </div>
+            <div class="tech-item">
+                <span>📦</span> Semver
+            </div>
+            <div class="tech-item">
+                <span>📄</span> TOML Parser
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section id="usecases">
+        <h2 class="section-title">Perfect For</h2>
+        <p class="section-subtitle">From solo developers to enterprise teams</p>
+        <div class="usecases-grid">
+            <div class="usecase-card">
+                <h3>👨‍💻 Solo Developers</h3>
+                <p>Keep your personal projects up-to-date without manual checking</p>
+            </div>
+            <div class="usecase-card">
+                <h3>👥 Development Teams</h3>
+                <p>Standardize dependency management across your organization</p>
+            </div>
+            <div class="usecase-card">
+                <h3>🏗️ Monorepo Projects</h3>
+                <p>Track dependencies across multiple workspace crates</p>
+            </div>
+            <div class="usecase-card">
+                <h3>🔄 CI/CD Pipelines</h3>
+                <p>Automate outdated dependency detection in your builds</p>
+            </div>
+            <div class="usecase-card">
+                <h3>🔒 Private Registries</h3>
+                <p>Works seamlessly with custom and private crate registries</p>
+            </div>
+            <div class="usecase-card">
+                <h3>🌐 Air-gapped Environments</h3>
+                <p>Support for local mirrors and file-based registries</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <div class="cta-section">
+        <h2>Ready to Upgrade Your Workflow?</h2>
+        <p>Install Fancy Crates today and never miss a dependency update again</p>
+        <a href="https://marketplace.visualstudio.com/items?itemName=AlfaTM.fancy-crates" class="btn">
+            Get Started Free
+        </a>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="https://github.com/alfatm/fancy-crates">GitHub</a>
+            <a href="https://github.com/alfatm/fancy-crates/issues">Issues</a>
+            <a href="https://marketplace.visualstudio.com/items?itemName=AlfaTM.fancy-crates">Marketplace</a>
+            <a href="https://github.com/alfatm/fancy-crates/blob/main/CHANGELOG.md">Changelog</a>
+        </div>
+        <p class="footer-copy">
+            MIT License &copy; 2025 Fancy Crates<br>
+            <small>Fork of sparse-crates by citreae535, originally forked from crates by Seray Uzgur</small>
+        </p>
+    </footer>
+
+    <!-- Smooth scroll behavior -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Fade in elements on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationDelay = '0.2s';
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section:not(.hero)').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+
+</html>
