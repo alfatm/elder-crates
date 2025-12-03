@@ -12,6 +12,7 @@ Keeping dependencies up to date is essential for security patches, bug fixes, an
 
 - Cargo's [sparse protocol](https://rust-lang.github.io/rfcs/2789-sparse-index.html) for fast index lookups
 - Granular version status: ✅ latest, 🟨 patch behind, 🟧 minor behind, 🟥 major behind
+- **Security advisory warnings** via `cargo-deny` integration (optional)
 - Remote and local crates.io mirrors (HTTP/HTTPS/file URLs)
 - Alternate registries with authentication token support
 - Automatic registry detection from `.cargo/config.toml`
@@ -27,6 +28,7 @@ Keeping dependencies up to date is essential for security patches, bug fixes, an
 | 🟧      | minor-behind | Minor update available                             |
 | 🟥      | major-behind | Major update available                             |
 | ❗      | error        | Failed to fetch crate info or no matching versions |
+| 🚨      | advisory     | Security advisory detected (requires `cargo-deny`) |
 
 ## Version Requirements
 
@@ -61,6 +63,41 @@ When you specify a short version or use operators, Cargo interprets it as a rang
 - `clap = "3"` with latest `4.5.0` → 🟥 major-behind (range: 4.5.0 doesn't satisfy `>=3.0.0, <4.0.0`)
 - `rand = "0.7"` with latest `0.8.5` → 🟧 minor-behind (range: 0.8.5 doesn't satisfy `>=0.7.0, <0.8.0`)
 - `rand = "0.8.4"` with latest `0.8.5` → 🟨 patch-behind (exact: 0.8.4 < 0.8.5)
+
+## Security Advisories
+
+Fancy Crates integrates with [`cargo-deny`](https://embarkstudios.github.io/cargo-deny/) to check your dependencies against the [RustSec Advisory Database](https://rustsec.org/).
+
+### Setup
+
+Install `cargo-deny`:
+
+```bash
+cargo install cargo-deny
+```
+
+That's it! Fancy Crates will automatically detect `cargo-deny` and display security warnings.
+
+### How It Works
+
+When you open a `Cargo.toml`, Fancy Crates runs `cargo deny check advisories` in the background. If any dependency has a known vulnerability, you'll see:
+
+- 🚨 emoji in the decoration (e.g., `🚨 ✅` or `🚨 🟧 1.5.0`)
+- Detailed advisory information in the hover tooltip, including:
+  - Advisory ID with link to RustSec
+  - Severity level
+  - Description
+  - Recommended solution
+
+### Advisory Types
+
+| Emoji | Type         | Meaning                              |
+| ----- | ------------ | ------------------------------------ |
+| 🚨    | vulnerability | Security vulnerability               |
+| ⚠️    | unmaintained | Package is no longer maintained      |
+| 💀    | unsound      | Contains undefined behavior          |
+| ℹ️    | notice       | General notice                       |
+| 🗑️    | yanked       | Version has been yanked from registry |
 
 ## Configuration
 

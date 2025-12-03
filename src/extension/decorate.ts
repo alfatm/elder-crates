@@ -6,7 +6,15 @@ import {
   ThemeColor,
   window,
 } from 'vscode'
-import { DOCS_RS_URL, formatDependencyResult, validateCargoTomlContent } from '../core/index.js'
+import {
+  type AdvisoryMap,
+  checkAdvisories,
+  DOCS_RS_URL,
+  formatAdvisoriesForHover,
+  formatDependencyResult,
+  SYMBOL_ADVISORY,
+  validateCargoTomlContent,
+} from '../core/index.js'
 import type { DependencyStatus, ValidatorConfig } from '../core/types.js'
 import { buildValidatorConfig, loadConfigForScope, VSCODE_USER_AGENT } from './config.js'
 import log from './log.js'
@@ -66,11 +74,26 @@ export async function decorate(editor: TextEditor) {
     },
   }
 
-  const result = await validateCargoTomlContent(editor.document.getText(), fileName, config)
+  // Run version validation and advisory check in parallel
+  const [result, advisoryResult] = await Promise.all([
+    validateCargoTomlContent(editor.document.getText(), fileName, config),
+    checkAdvisories(fileName, log),
+  ])
 
   if (result.parseError) {
     log.error(`${fileName} - parse error: ${result.parseError.message}`)
     return
+  }
+
+  const advisories: AdvisoryMap = advisoryResult.advisories
+  if (advisoryResult.available) {
+    if (advisoryResult.error) {
+      log.warn(`${fileName} - cargo-deny error: ${advisoryResult.error}`)
+    } else {
+      log.info(`${fileName} - cargo-deny found ${advisories.size} packages with advisories`)
+    }
+  } else {
+    log.debug(`${fileName} - cargo-deny not available, skipping advisory check`)
   }
 
   const docsUrl = DOCS_RS_URL.toString()
@@ -86,8 +109,13 @@ export async function decorate(editor: TextEditor) {
 
   for (const depResult of result.dependencies) {
     const { status, decoration, hoverMarkdown, updateVersion } = formatDependencyResult(depResult, docsUrl)
+    const crateName = depResult.dependency.name
 
-    // Build hover message with optional update command
+    // Check if this crate has security advisories
+    const crateAdvisories = advisories.get(crateName) ?? []
+    const hasAdvisories = crateAdvisories.length > 0
+
+    // Build hover message with optional update command and advisories
     const hoverMessage = new MarkdownString(hoverMarkdown)
     hoverMessage.isTrusted = true
 
@@ -98,7 +126,7 @@ export async function decorate(editor: TextEditor) {
           filePath: fileName,
           line: depResult.dependency.line,
           newVersion: updateVersion,
-          crateName: depResult.dependency.name,
+          crateName: crateName,
         }),
       )
       hoverMessage.appendMarkdown(
@@ -106,12 +134,20 @@ export async function decorate(editor: TextEditor) {
       )
     }
 
+    // Add advisory information to hover if present
+    if (hasAdvisories) {
+      hoverMessage.appendMarkdown(formatAdvisoriesForHover(crateAdvisories))
+    }
+
+    // Add advisory emoji to decoration if there are security issues
+    const finalDecoration = hasAdvisories ? `${SYMBOL_ADVISORY} ${decoration}` : decoration
+
     decorationsByStatus[status].push({
       range: editor.document.lineAt(depResult.dependency.line).range,
       hoverMessage,
       renderOptions: {
         after: {
-          contentText: decoration,
+          contentText: finalDecoration,
         },
       },
     })

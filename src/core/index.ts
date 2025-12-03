@@ -1,3 +1,11 @@
+export type { Advisory, AdvisoryKind, AdvisoryMap, CargoDenyResult } from './advisory.js'
+export {
+  checkAdvisories,
+  formatAdvisoriesForHover,
+  getAdvisoryEmoji,
+  isCargoDenyAvailable,
+  SYMBOL_ADVISORY,
+} from './advisory.js'
 export type { CargoConfig, CargoRegistry, CargoSourceReplacement } from './cargo.js'
 export { loadCargoConfig } from './cargo.js'
 export type { RegistryConfig } from './config.js'

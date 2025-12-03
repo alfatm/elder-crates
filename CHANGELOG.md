@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Security advisory integration**: If `cargo-deny` is installed, Fancy Crates automatically checks for known vulnerabilities in your dependencies using the RustSec Advisory Database.
+  - Shows 🚨 emoji next to packages with security advisories
+  - Hover tooltip displays advisory details: ID, title, severity, and recommended solution
+  - Supports vulnerability, unmaintained, unsound, notice, and yanked advisory types
+  - Advisory check runs in parallel with version validation for minimal performance impact
 - **Disable check comments**: Skip version checking for specific dependencies or entire files using comments:
   - `# crates: disable-check` on a dependency line skips that crate
   - `#! crates: disable-check` at file start disables all checks in the file
