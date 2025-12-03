@@ -27,6 +27,7 @@
   },
   "license": "MIT",
   "displayName": "Elder Crates",
+  "icon": "fancy-crates-logo.png",
   "description": "Helps Rust developers spot outdated dependencies in `Cargo.toml` manifest files. Supports crates.io, alternate registries, and crates.io mirrors that offers the sparse protocol.",
   "categories": [
     "Programming Languages"
