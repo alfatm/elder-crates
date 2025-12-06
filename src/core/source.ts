@@ -107,7 +107,7 @@ async function resolvePathVersion(
     const absolutePath = path.isAbsolute(depPath) ? depPath : path.resolve(cargoTomlDir, depPath)
     const cargoTomlPath = path.join(absolutePath, 'Cargo.toml')
 
-    options?.logger?.debug(`Reading path dependency from: ${cargoTomlPath}`)
+    options?.logger?.debug(`[${crateName}] Reading path dependency: ${depPath}`)
 
     const content = await readFile(cargoTomlPath, 'utf-8')
     const info = extractCargoTomlInfo(content)
@@ -115,13 +115,13 @@ async function resolvePathVersion(
     // Use explicit version, or workspace version if usesWorkspaceVersion is true
     const effectiveVersion = info.version ?? (info.usesWorkspaceVersion ? info.workspaceVersion : undefined)
     if (effectiveVersion) {
-      options?.logger?.debug(`Found version ${depPath}:${effectiveVersion} in path dependency`)
+      options?.logger?.debug(`[${crateName}] Resolved path dependency: ${effectiveVersion}`)
       return { version: effectiveVersion }
     }
 
     // If no version found, check if this is a workspace and search members
     if (info.workspaceMembers && info.workspaceMembers.length > 0) {
-      options?.logger?.debug(`Found workspace with members: ${info.workspaceMembers.join(', ')}`)
+      options?.logger?.debug(`[${crateName}] Searching workspace members: ${info.workspaceMembers.join(', ')}`)
       const expandedMembers = await expandWorkspaceMembers(absolutePath, info.workspaceMembers)
 
       for (const memberPath of expandedMembers) {
@@ -138,7 +138,7 @@ async function resolvePathVersion(
               memberInfo.version ?? (memberInfo.usesWorkspaceVersion ? info.workspaceVersion : undefined)
             if (memberEffectiveVersion) {
               options?.logger?.debug(
-                `Found version ${memberEffectiveVersion} for ${crateName} in workspace member ${memberPath}`,
+                `[${crateName}] Found in workspace member ${memberPath}: ${memberEffectiveVersion}`,
               )
               return { version: memberEffectiveVersion }
             }
@@ -151,7 +151,7 @@ async function resolvePathVersion(
 
     return {
       version: undefined,
-      error: new Error(`No version found in ${depPath}:${cargoTomlPath}`),
+      error: new Error(`[${crateName}] No version found in path dependency: ${depPath}`),
     }
   } catch (err) {
     return {
@@ -176,22 +176,27 @@ async function resolveGitVersion(
   // Determine the git ref to use
   const ref = rev || tag || branch || 'HEAD'
 
+  options?.logger?.debug(`[${crateName}] Resolving git dependency: ${gitUrl} (ref: ${ref})`)
+
   // First, try git archive (works with SSH keys, private repos, etc.)
   const cliResult = await tryGitCliFetch(gitUrl, ref, crateName, options)
   if (cliResult.version) {
+    options?.logger?.debug(`[${crateName}] Resolved via git archive: ${cliResult.version}`)
     return cliResult
   }
 
   if (cliResult.error) {
-    options?.logger?.debug(`git archive failed for ${gitUrl} at ${ref}, trying HTTP: ${cliResult.error}`)
+    options?.logger?.debug(`[${crateName}] git archive failed, trying HTTP fetch`)
   }
 
   // If git archive failed, try HTTP fetch for known hosts (GitHub/GitLab)
   const httpResult = await tryHttpFetch(gitUrl, ref, crateName, options)
   if (httpResult.version) {
+    options?.logger?.debug(`[${crateName}] Resolved via HTTP: ${httpResult.version}`)
     return httpResult
   }
 
+  options?.logger?.debug(`[${crateName}] Failed to resolve git dependency`)
   // Return the more informative error
   return cliResult.error ? cliResult : httpResult
 }
@@ -226,14 +231,14 @@ async function tryHttpFetch(
     const rawUrlResult = getGitRawFileUrl(gitUrl, ref, crateName, customHosts)
 
     if (!rawUrlResult) {
-      options?.logger?.debug(`Cannot determine raw URL for git dependency: ${gitUrl}`)
+      options?.logger?.debug(`[${crateName}] Unsupported git host for HTTP fetch: ${gitUrl}`)
       return {
         version: undefined,
         error: new Error(`Unsupported git host for HTTP fetch: ${gitUrl}`),
       }
     }
 
-    options?.logger?.debug(`Fetching git dependency Cargo.toml from: ${rawUrlResult.url}`)
+    options?.logger?.debug(`[${crateName}] Fetching via HTTP: ${rawUrlResult.url}`)
 
     const headers = buildGitFetchHeaders(options?.userAgent, rawUrlResult.token)
     const response = await fetch(rawUrlResult.url, {
@@ -244,7 +249,7 @@ async function tryHttpFetch(
       // Try root Cargo.toml if crate-specific path failed
       const rootRawUrlResult = getGitRawFileUrl(gitUrl, ref, undefined, customHosts)
       if (rootRawUrlResult && rootRawUrlResult.url !== rawUrlResult.url) {
-        options?.logger?.debug(`Trying root Cargo.toml: ${rootRawUrlResult.url}`)
+        options?.logger?.debug(`[${crateName}] Trying root Cargo.toml`)
         const rootHeaders = buildGitFetchHeaders(options?.userAgent, rootRawUrlResult.token)
         const rootResponse = await fetch(rootRawUrlResult.url, {
           headers: Object.keys(rootHeaders).length > 0 ? rootHeaders : undefined,
@@ -256,7 +261,7 @@ async function tryHttpFetch(
           // Use explicit version, or workspace version if usesWorkspaceVersion is true
           const effectiveVersion = info.version ?? (info.usesWorkspaceVersion ? info.workspaceVersion : undefined)
           if (effectiveVersion) {
-            options?.logger?.debug(`Found version ${effectiveVersion} in git dependency root`)
+            options?.logger?.debug(`[${crateName}] Found in root Cargo.toml: ${effectiveVersion}`)
             return { version: effectiveVersion }
           }
 
@@ -290,7 +295,7 @@ async function tryHttpFetch(
     // Use explicit version, or workspace version if usesWorkspaceVersion is true
     const effectiveVersion = info.version ?? (info.usesWorkspaceVersion ? info.workspaceVersion : undefined)
     if (effectiveVersion) {
-      options?.logger?.debug(`Found version ${effectiveVersion} in git dependency via HTTP`)
+      options?.logger?.debug(`[${crateName}] Found via HTTP: ${effectiveVersion}`)
       return { version: effectiveVersion }
     }
 
@@ -335,7 +340,7 @@ async function searchWorkspaceMembersHttp(
   customHosts: CustomGitHost[] | undefined,
   options?: FetchOptions,
 ): Promise<SourceResolution> {
-  options?.logger?.debug(`Searching workspace members for ${crateName}: ${workspaceMembers.join(', ')}`)
+  options?.logger?.debug(`[${crateName}] Searching HTTP workspace members: ${workspaceMembers.join(', ')}`)
 
   // Build list of potential paths to check
   const pathsToCheck: string[] = []
@@ -358,7 +363,7 @@ async function searchWorkspaceMembersHttp(
     }
 
     try {
-      options?.logger?.debug(`Trying workspace member: ${memberRawUrl.url}`)
+      options?.logger?.debug(`[${crateName}] Trying workspace member: ${memberPath}`)
       const headers = buildGitFetchHeaders(options?.userAgent, memberRawUrl.token)
       const response = await fetch(memberRawUrl.url, {
         headers: Object.keys(headers).length > 0 ? headers : undefined,
@@ -374,9 +379,7 @@ async function searchWorkspaceMembersHttp(
           const effectiveVersion =
             memberInfo.version ?? (memberInfo.usesWorkspaceVersion ? workspaceVersion : undefined)
           if (effectiveVersion) {
-            options?.logger?.debug(
-              `Found version ${effectiveVersion} for ${crateName} in workspace member ${memberPath}`,
-            )
+            options?.logger?.debug(`[${crateName}] Found in workspace member ${memberPath}: ${effectiveVersion}`)
             return { version: effectiveVersion }
           }
         }
@@ -402,19 +405,18 @@ async function tryGitCliFetch(
   const hasRequiredTools = cliTools.git && cliTools.sh && cliTools.tar
 
   if (!hasRequiredTools) {
-    options?.logger?.debug(
-      `Skipping git archive: missing CLI tools (git=${cliTools.git}, sh=${cliTools.sh}, tar=${cliTools.tar})`,
-    )
+    const missing = [!cliTools.git && 'git', !cliTools.sh && 'sh', !cliTools.tar && 'tar'].filter(Boolean).join(', ')
+    options?.logger?.debug(`[${crateName}] git archive unavailable (missing: ${missing})`)
     return {
       version: undefined,
-      error: new Error(`Could not fetch Cargo.toml from ${gitUrl} via git CLI (missing required CLI tools)`),
+      error: new Error(`[${crateName}] git archive unavailable (missing: ${missing})`),
     }
   }
 
   const result = await tryGitArchive(gitUrl, ref, crateName, options)
 
   if (!result.version && result.error) {
-    options?.logger?.debug(`Unable to fetch via git archive: ${result.error}`)
+    options?.logger?.debug(`[${crateName}] git archive failed: ${result.error.message}`)
   }
 
   return result.version
@@ -456,7 +458,7 @@ async function tryGitArchive(
 
   for (const archivePath of paths) {
     try {
-      options?.logger?.debug(`Trying git archive for ${gitUrl} ref=${ref} path=${archivePath}`)
+      options?.logger?.debug(`[${crateName}] Trying git archive: ${archivePath}`)
 
       const content = await execGitArchive(gitUrl, ref, archivePath)
 
@@ -465,13 +467,13 @@ async function tryGitArchive(
       // Use explicit version, or workspace version if usesWorkspaceVersion is true
       const effectiveVersion = info.version ?? (info.usesWorkspaceVersion ? info.workspaceVersion : undefined)
       if (effectiveVersion) {
-        options?.logger?.debug(`Found version ${effectiveVersion} via git archive`)
+        options?.logger?.debug(`[${crateName}] Found via git archive: ${effectiveVersion}`)
         return { version: effectiveVersion }
       }
 
       // Check workspace members if no direct version
       if (info.workspaceMembers && info.workspaceMembers.length > 0) {
-        options?.logger?.debug(`Found workspace with members: ${info.workspaceMembers.join(', ')}`)
+        options?.logger?.debug(`[${crateName}] Searching git archive workspace: ${info.workspaceMembers.join(', ')}`)
         const workspaceResult = await searchWorkspaceMembersGitArchive(
           gitUrl,
           ref,
@@ -485,7 +487,7 @@ async function tryGitArchive(
         }
       }
     } catch {
-      options?.logger?.debug(`git archive attempt failed for ${gitUrl} ref=${ref} path=${archivePath}`)
+      options?.logger?.debug(`[${crateName}] git archive failed for path: ${archivePath}`)
       // Try next path
     }
   }

@@ -47,7 +47,7 @@ export async function updateDependencyVersion(args: UpdateDependencyArgs): Promi
   const version = match?.[2]
 
   if (!match || prefix === undefined || version === undefined) {
-    log.warn(`Could not find version pattern on line ${line + 1} for ${crateName}`)
+    log.warn(`[${crateName}] Could not find version pattern on line ${line + 1}`)
     window.showWarningMessage(`Could not find version to update for ${crateName}`)
     return
   }
@@ -63,11 +63,11 @@ export async function updateDependencyVersion(args: UpdateDependencyArgs): Promi
   const success = await workspace.applyEdit(edit)
 
   if (success) {
-    log.info(`Updated ${crateName} to version ${newVersion}`)
+    log.info(`[${crateName}] Updated version: ${version} -> ${newVersion}`)
     // Save the document to trigger re-decoration
     await document.save()
   } else {
-    log.error(`Failed to update ${crateName} to version ${newVersion}`)
+    log.error(`[${crateName}] Failed to update version to ${newVersion}`)
     window.showErrorMessage(`Failed to update ${crateName}`)
   }
 }

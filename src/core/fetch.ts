@@ -154,7 +154,7 @@ const fetchRemote = async (
   log: Logger,
 ): Promise<semver.SemVer[]> => {
   const url = new URL(path.posix.join(registry.pathname, resolveIndexPath(name)), registry)
-  log.info(`${name} - fetching versions from registry: ${url}`)
+  log.debug(`[${name}] Fetching from ${registry.hostname}`)
 
   const headers: Record<string, string> = { 'User-Agent': userAgent }
   if (token) {
@@ -197,7 +197,7 @@ const fetchRemote = async (
 
 const fetchLocal = async (name: string, dir: string, source: LocalSource, log: Logger): Promise<semver.SemVer[]> => {
   const filePath = path.resolve(dir, resolveIndexPath(name))
-  log.info(`${name} - fetching versions from ${source}: ${filePath}`)
+  log.debug(`[${name}] Reading from ${source}`)
 
   try {
     const buffer = await readFile(filePath)
@@ -220,7 +220,7 @@ const parseIndex = (name: string, buffer: Buffer, source: Source, log: Logger): 
     .map((line, i) => {
       const result = parseRelease(line, name)
       if (result instanceof Error) {
-        log.warn(`${name} - ${source} index line ${i} - ${result.message}`)
+        log.warn(`[${name}] Parse error in ${source} line ${i}: ${result.message}`)
         return undefined
       }
       return result
@@ -233,12 +233,8 @@ const parseIndex = (name: string, buffer: Buffer, source: Source, log: Logger): 
     throw new Error(message)
   }
 
-  log.info(`${name} - ${versions.length} versions parsed from ${source}`)
-
   const latest = versions.sort(semver.compareBuild).reverse()[0]
-  if (latest) {
-    log.debug(`${name} - latest version: ${latest}`)
-  }
+  log.debug(`[${name}] Found ${versions.length} versions, latest: ${latest}`)
 
   return versions
 }
@@ -248,13 +244,13 @@ const parseCacheBuffer = (name: string, buffer: Buffer, log: Logger): string[] =
   const indexVersion = buffer.readUint32LE(1)
 
   if (cacheVersion !== CACHE_FORMAT.version) {
-    const message = `${name}: unknown cache version (${cacheVersion})`
+    const message = `[${name}] Incompatible cache format version ${cacheVersion} (expected ${CACHE_FORMAT.version})`
     log.warn(message)
     throw new Error(message)
   }
 
   if (indexVersion !== CACHE_FORMAT.indexVersion) {
-    const message = `${name}: unknown index version (${indexVersion})`
+    const message = `[${name}] Incompatible cache index version ${indexVersion} (expected ${CACHE_FORMAT.indexVersion})`
     log.warn(message)
     throw new Error(message)
   }

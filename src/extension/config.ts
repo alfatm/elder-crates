@@ -21,7 +21,7 @@ const cargoConfigCache = new Map<string, CargoConfig>()
  */
 export function clearCargoConfigCache(): void {
   if (cargoConfigCache.size > 0) {
-    log.info(`Clearing cargo config cache (${cargoConfigCache.size} entries)`)
+    log.debug(`Clearing cargo config cache (${cargoConfigCache.size} entries)`)
     cargoConfigCache.clear()
   }
 }
@@ -42,11 +42,13 @@ export async function loadConfigForScope(scope: ConfigurationScope): Promise<voi
   }
 
   const result = await loadCargoConfig(cwd)
-  log.info(
-    `Loaded ${result.registries.length} registries from cargo config: ${result.registries.map((r) => r.name).join(', ')}`,
-  )
+  if (result.registries.length > 0) {
+    log.debug(
+      `Loaded ${result.registries.length} registries from cargo config: ${result.registries.map((r) => r.name).join(', ')}`,
+    )
+  }
   if (result.sourceReplacement) {
-    log.info(`Source replacement: ${result.sourceReplacement.source} -> ${result.sourceReplacement.replaceWith}`)
+    log.debug(`Using crates.io mirror: ${result.sourceReplacement.replaceWith} (${result.sourceReplacement.index})`)
   }
   cargoConfigCache.set(cwd, result)
 }

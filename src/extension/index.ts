@@ -12,8 +12,15 @@ const decoratedEditors = new Set<TextEditor>()
 /** Track pending decoration operations */
 const pendingDecorations = new Map<string, AbortController>()
 
+/** Extract short display name from full file path */
+const getDisplayPath = (filePath: string): string => {
+  const parts = filePath.split(/[/\\]/)
+  const len = parts.length
+  return len >= 2 ? `${parts[len - 2]}/${parts[len - 1]}` : (parts[len - 1] ?? filePath)
+}
+
 export function activate(context: ExtensionContext) {
-  log.info(`Fancy Crates v${packageJson.version} activated`)
+  log.info(`Extension activated (v${packageJson.version})`)
 
   // Register command to manually refresh decorations
   const refreshCommand = commands.registerCommand('fancy-crates.refresh', () => {
@@ -61,8 +68,11 @@ export function activate(context: ExtensionContext) {
 
   // Listen for configuration changes
   const configListener = workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('fancy-crates')) {
-      log.info('Configuration changed, refreshing decorations')
+    if (e.affectsConfiguration('fancy-crates.logLevel')) {
+      log.updateLogLevel()
+    }
+    if (e.affectsConfiguration('fancy-crates') && !e.affectsConfiguration('fancy-crates.logLevel')) {
+      log.info('Settings changed, refreshing all Cargo.toml files')
       clearCargoConfigCache()
       refreshAllCargoToml()
     }
@@ -71,7 +81,7 @@ export function activate(context: ExtensionContext) {
   // Watch for .cargo/config.toml changes to invalidate cargo config cache
   const cargoConfigWatcher = workspace.createFileSystemWatcher('**/.cargo/config.toml')
   const onCargoConfigChange = () => {
-    log.info('.cargo/config.toml changed, clearing cargo config cache')
+    log.info('Cargo config changed (.cargo/config.toml), refreshing all files')
     clearCargoConfigCache()
     refreshAllCargoToml()
   }
@@ -152,7 +162,7 @@ async function decorateWithProgress(editor: TextEditor): Promise<void> {
   } catch (err) {
     if (!controller.signal.aborted) {
       const message = err instanceof Error ? err.message : String(err)
-      log.error(`Failed to decorate ${fileName}: ${message}`)
+      log.error(`[${getDisplayPath(fileName)}] Decoration failed: ${message}`)
       window.showErrorMessage(`Fancy Crates: Failed to check dependencies. See output for details.`)
     }
   } finally {
@@ -174,7 +184,7 @@ function reloadCurrentFile() {
   clearVersionsCache()
   resetCliToolsCache()
 
-  log.info('All caches cleared, reloading current file')
+  log.info('Caches cleared (versions, cargo config, CLI tools), reloading files')
 
   // Reload the active editor if it's a Cargo.toml
   const activeEditor = window.activeTextEditor

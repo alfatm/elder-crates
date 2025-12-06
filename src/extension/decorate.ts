@@ -161,17 +161,28 @@ export function cancelPendingAdvisoryCheck(fileName: string): void {
 /** Progress reporter type for decorate function */
 export type ProgressReporter = Progress<{ message?: string }>
 
+/** Extract short display name from full file path */
+const getDisplayPath = (filePath: string): string => {
+  // Show parent directory + filename for context (e.g., "my-crate/Cargo.toml")
+  const parts = filePath.split(/[/\\]/)
+  const len = parts.length
+  return len >= 2 ? `${parts[len - 2]}/${parts[len - 1]}` : (parts[len - 1] ?? filePath)
+}
+
 export async function decorate(editor: TextEditor, signal?: AbortSignal, progress?: ProgressReporter): Promise<void> {
-  const fileName = editor.document.fileName
-  log.info(`${fileName} - decorating file`)
+  const filePath = editor.document.fileName
+  const displayPath = getDisplayPath(filePath)
   const scope = editor.document.uri
   const start = Date.now()
 
+  log.info(`[${displayPath}] Starting dependency validation`)
+
   // Cancel any pending advisory check for this file
-  cancelPendingAdvisoryCheck(fileName)
+  cancelPendingAdvisoryCheck(filePath)
 
   // Check if already aborted
   if (signal?.aborted) {
+    log.debug(`[${displayPath}] Aborted before start`)
     return
   }
 
@@ -180,6 +191,7 @@ export async function decorate(editor: TextEditor, signal?: AbortSignal, progres
   await loadConfigForScope(scope)
 
   if (signal?.aborted) {
+    log.debug(`[${displayPath}] Aborted after config load`)
     return
   }
 
@@ -196,24 +208,30 @@ export async function decorate(editor: TextEditor, signal?: AbortSignal, progres
 
   // Load Cargo.lock if available
   progress?.report({ message: 'Reading Cargo.lock...' })
-  const lockPath = await findCargoLockPath(fileName)
+  const lockPath = await findCargoLockPath(filePath)
   const lockfile = lockPath ? readCargoLockfile(lockPath) : undefined
-  log.debug(`${fileName} - Cargo.lock: ${lockPath ?? 'not found'}`)
+  if (lockPath) {
+    log.debug(`[${displayPath}] Using lockfile: ${getDisplayPath(lockPath)}`)
+  } else {
+    log.debug(`[${displayPath}] No Cargo.lock found`)
+  }
 
   if (signal?.aborted) {
+    log.debug(`[${displayPath}] Aborted after lockfile load`)
     return
   }
 
-  // First, validate versions (fast operation)
+  // Validate versions
   progress?.report({ message: 'Validating dependencies...' })
-  const result = await validateCargoTomlContent(editor.document.getText(), fileName, config, lockfile)
+  const result = await validateCargoTomlContent(editor.document.getText(), filePath, config, lockfile)
 
   if (signal?.aborted) {
+    log.debug(`[${displayPath}] Aborted after validation`)
     return
   }
 
   if (result.parseError) {
-    log.error(`${fileName} - parse error: ${result.parseError.message}`)
+    log.error(`[${displayPath}] TOML parse error: ${result.parseError.message}`)
     return
   }
 
@@ -221,13 +239,16 @@ export async function decorate(editor: TextEditor, signal?: AbortSignal, progres
   const emptyAdvisories: AdvisoryMap = new Map()
 
   // Show decorations immediately without advisories
-  progress?.report({ message: `Decorated ${result.dependencies.length} dependencies` })
-  applyDecorations(editor, result.dependencies, fileName, docsUrl, emptyAdvisories)
-  log.info(`${fileName} - file decorated in ${((Date.now() - start) / 1000).toFixed(2)} seconds`)
+  const depCount = result.dependencies.length
+  progress?.report({ message: `Decorated ${depCount} dependencies` })
+  applyDecorations(editor, result.dependencies, filePath, docsUrl, emptyAdvisories)
+
+  const elapsed = ((Date.now() - start) / 1000).toFixed(2)
+  log.info(`[${displayPath}] Decorated ${depCount} dependencies in ${elapsed}s`)
 
   // Create abort controller for advisory check
   const advisoryController = new AbortController()
-  pendingAdvisoryChecks.set(fileName, advisoryController)
+  pendingAdvisoryChecks.set(filePath, advisoryController)
 
   // Link parent signal to advisory controller
   if (signal) {
@@ -235,46 +256,43 @@ export async function decorate(editor: TextEditor, signal?: AbortSignal, progres
   }
 
   // Run cargo-deny in background and update decorations when done
-  checkAdvisories(fileName, log)
+  checkAdvisories(filePath, log)
     .then((advisoryResult) => {
       // Check if aborted
       if (advisoryController.signal.aborted) {
-        log.debug(`${fileName} - advisory check cancelled`)
+        log.debug(`[${displayPath}] Advisory check cancelled`)
         return
       }
 
       // Verify editor is still valid and document unchanged
-      if (editor.document.isClosed || editor.document.fileName !== fileName) {
-        log.debug(`${fileName} - editor changed, skipping advisory decoration update`)
+      if (editor.document.isClosed || editor.document.fileName !== filePath) {
+        log.debug(`[${displayPath}] Editor changed, skipping advisory update`)
         return
       }
 
       const advisories: AdvisoryMap = advisoryResult.advisories
       if (advisoryResult.available) {
         if (advisoryResult.error) {
-          log.warn(`${fileName} - cargo-deny error: ${advisoryResult.error}`)
+          log.warn(`[${displayPath}] cargo-deny error: ${advisoryResult.error}`)
+        } else if (advisories.size > 0) {
+          log.info(`[${displayPath}] Found ${advisories.size} packages with security advisories`)
+          applyDecorations(editor, result.dependencies, filePath, docsUrl, advisories)
         } else {
-          log.info(`${fileName} - cargo-deny found ${advisories.size} packages with advisories`)
-        }
-
-        // Only update decorations if there are advisories to show
-        if (advisories.size > 0) {
-          applyDecorations(editor, result.dependencies, fileName, docsUrl, advisories)
-          log.info(`${fileName} - decorations updated with advisories`)
+          log.debug(`[${displayPath}] No security advisories found`)
         }
       } else {
-        log.debug(`${fileName} - cargo-deny not available, skipping advisory check`)
+        log.debug(`[${displayPath}] cargo-deny not installed, skipping advisory check`)
       }
     })
     .catch((err) => {
       if (!advisoryController.signal.aborted) {
-        log.error(`${fileName} - advisory check failed: ${err}`)
+        log.error(`[${displayPath}] Advisory check failed: ${err instanceof Error ? err.message : err}`)
       }
     })
     .finally(() => {
       // Clean up tracking
-      if (pendingAdvisoryChecks.get(fileName) === advisoryController) {
-        pendingAdvisoryChecks.delete(fileName)
+      if (pendingAdvisoryChecks.get(filePath) === advisoryController) {
+        pendingAdvisoryChecks.delete(filePath)
       }
     })
 }

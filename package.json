@@ -1,6 +1,6 @@
 {
   "name": "fancy-crates",
-  "version": "1.2.13",
+  "version": "1.2.14",
   "author": {
     "name": "alfatm"
   },
@@ -116,6 +116,19 @@
           },
           "default": [],
           "description": "A list of alternate registries. The index of an alternate registry must support the sparse protocol."
+        },
+        "fancy-crates.logLevel": {
+          "type": "string",
+          "scope": "window",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error",
+            "off"
+          ],
+          "default": "info",
+          "description": "Controls the verbosity of logging in the Output panel. Set to 'debug' for detailed troubleshooting."
         }
       }
     }
