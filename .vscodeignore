@@ -12,3 +12,9 @@ tsconfig.json
 vite.config.ts
 pnpm-lock.yaml
 *.vsix
+dist/examples
+examples
+CODE_STYLE.md
+presentation.html
+CHANGES.md
+API.md
